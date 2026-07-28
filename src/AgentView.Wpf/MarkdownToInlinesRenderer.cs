@@ -41,7 +41,13 @@ internal sealed class MarkdownToInlinesRenderer
                 target.Add(RenderParagraph(paragraph));
                 break;
             case FencedCodeBlock code:
-                target.Add(RenderCodeBlock(ExtractCode(code)));
+                // A host-registered fence renderer (e.g. mermaid diagrams) takes precedence;
+                // unhandled languages fall back to the plain code block.
+                if (code.Info?.Trim() is { Length: > 0 } language
+                    && MarkdownViewer.FenceRenderer?.Invoke(language, ExtractCode(code)) is { } custom)
+                    target.Add(new BlockUIContainer(custom) { Margin = new Thickness(0, 4, 0, 6) });
+                else
+                    target.Add(RenderCodeBlock(ExtractCode(code)));
                 break;
             case CodeBlock code:
                 target.Add(RenderCodeBlock(ExtractCode(code)));

@@ -16,6 +16,14 @@ public class MarkdownViewer : ContentControl
         nameof(EnableMarkdown), typeof(bool), typeof(MarkdownViewer),
         new PropertyMetadata(true, static (d, _) => ((MarkdownViewer)d).Rebuild()));
 
+    /// <summary>
+    /// Host-registered renderer for special fenced code blocks: given the fence language and
+    /// its code, return a UIElement to embed (e.g. a rendered mermaid diagram) or null for the
+    /// default monospace block. The library itself stays dependency-free — hosts bring their
+    /// own rendering (a WebView, an SVG engine, …).
+    /// </summary>
+    public static Func<string, string, UIElement?>? FenceRenderer { get; set; }
+
     public MarkdownViewer()
     {
         Focusable = false;
