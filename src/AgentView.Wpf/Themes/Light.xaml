@@ -1,0 +1,18 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:AgentView.Wpf">
+
+    <!-- Light alternative; applied automatically when AgentChatOptions.Theme = "light",
+         or merge it yourself into any resource scope. -->
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.BackgroundBrushKey}" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.SurfaceBrushKey}" Color="#F4F4F5" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.SurfaceStrongBrushKey}" Color="#E9E9EC" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.BorderBrushKey}" Color="#D4D4D8" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.AccentBrushKey}" Color="#2B6FD4" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.TextBrushKey}" Color="#1C1C1E" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.SubduedTextBrushKey}" Color="#6A6A70" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.SuccessBrushKey}" Color="#2E7D32" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.ErrorBrushKey}" Color="#C62828" />
+    <FontFamily x:Key="{x:Static local:AgentViewResourceKeys.MonospaceFontFamilyKey}">Cascadia Mono, Consolas, Courier New</FontFamily>
+
+</ResourceDictionary>

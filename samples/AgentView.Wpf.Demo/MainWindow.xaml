@@ -1,0 +1,20 @@
+<Window x:Class="AgentView.Wpf.Demo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:av="clr-namespace:AgentView.Wpf;assembly=AgentView.Wpf"
+        Title="AgentView.Wpf Demo" Height="760" Width="880"
+        Background="#181818">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Margin="10,8">
+            <Button Content="Append streaming message" Padding="10,4" Click="OnAppendStreaming" />
+            <Button Content="Toggle theme" Padding="10,4" Margin="8,0,0,0" Click="OnToggleTheme" />
+        </StackPanel>
+
+        <av:AgentChatView x:Name="Chat" Grid.Row="1" Margin="10,0,10,10" />
+    </Grid>
+</Window>
