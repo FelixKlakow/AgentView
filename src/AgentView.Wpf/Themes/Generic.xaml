@@ -14,8 +14,8 @@
     <!-- State badge: colored per ToolState, pulsing while running. -->
     <Style x:Key="AgentView.ToolStateBadgeStyle" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource {x:Static local:AgentViewResourceKeys.SubduedTextBrushKey}}" />
-        <Setter Property="CornerRadius" Value="9" />
-        <Setter Property="Padding" Value="8,1,8,2" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="Padding" Value="7,1,7,2" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Style.Triggers>
             <DataTrigger Binding="{Binding ToolCall.State, RelativeSource={RelativeSource AncestorType=local:ToolCallCard}}"
@@ -73,7 +73,7 @@
                             Background="{DynamicResource {x:Static local:AgentViewResourceKeys.SurfaceBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static local:AgentViewResourceKeys.BorderBrushKey}}"
                             BorderThickness="1"
-                            CornerRadius="6"
+                            CornerRadius="4"
                             Margin="0,3"
                             Padding="10,7">
                         <StackPanel>
@@ -110,7 +110,7 @@
                             <StackPanel x:Name="Body" Visibility="Collapsed" Margin="0,4,0,0">
                                 <TextBlock Text="Input" Style="{StaticResource AgentView.ToolSectionLabelStyle}"
                                            Visibility="{Binding ToolCall.Input, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource AgentView.StringToVisibility}}" />
-                                <Border CornerRadius="4" Padding="8,5"
+                                <Border CornerRadius="3" Padding="8,5"
                                         Background="{DynamicResource {x:Static local:AgentViewResourceKeys.SurfaceStrongBrushKey}}"
                                         Visibility="{Binding ToolCall.Input, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource AgentView.StringToVisibility}}">
                                     <TextBox Style="{StaticResource AgentView.ToolSectionTextStyle}"
@@ -118,7 +118,7 @@
                                 </Border>
                                 <TextBlock Text="Output" Style="{StaticResource AgentView.ToolSectionLabelStyle}"
                                            Visibility="{Binding ToolCall.Output, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource AgentView.StringToVisibility}}" />
-                                <Border CornerRadius="4" Padding="8,5"
+                                <Border CornerRadius="3" Padding="8,5"
                                         Background="{DynamicResource {x:Static local:AgentViewResourceKeys.SurfaceStrongBrushKey}}"
                                         Visibility="{Binding ToolCall.Output, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource AgentView.StringToVisibility}}">
                                     <TextBox Style="{StaticResource AgentView.ToolSectionTextStyle}"
@@ -149,6 +149,18 @@
                             <Setter TargetName="Chevron" Property="Text" Value="▾" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="local:MarkdownViewer">
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static local:AgentViewResourceKeys.TextBrushKey}}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="local:MarkdownViewer">
+                    <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -195,9 +207,9 @@
                                                        Text="{Binding Timestamp.LocalDateTime, StringFormat='HH:mm:ss'}"
                                                        Visibility="{Binding Options.ShowTimestamps, RelativeSource={RelativeSource AncestorType=local:AgentChatView}, Converter={StaticResource AgentView.BoolToVisibility}}" />
                                         </StackPanel>
-                                        <Border Background="{DynamicResource {x:Static local:AgentViewResourceKeys.AccentBrushKey}}"
-                                                CornerRadius="10" Padding="12,8" MaxWidth="640" HorizontalAlignment="Right">
-                                            <local:MarkdownViewer Foreground="White"
+                                        <Border Background="{DynamicResource {x:Static local:AgentViewResourceKeys.UserBubbleBrushKey}}"
+                                                CornerRadius="4" Padding="12,8" MaxWidth="640" HorizontalAlignment="Right">
+                                            <local:MarkdownViewer Foreground="{DynamicResource {x:Static local:AgentViewResourceKeys.UserBubbleTextBrushKey}}"
                                                                   Text="{Binding Content}"
                                                                   EnableMarkdown="{Binding Options.EnableMarkdown, RelativeSource={RelativeSource AncestorType=local:AgentChatView}}" />
                                         </Border>
@@ -221,7 +233,7 @@
                                         </StackPanel>
                                         <Border Background="{DynamicResource {x:Static local:AgentViewResourceKeys.SurfaceBrushKey}}"
                                                 BorderBrush="{DynamicResource {x:Static local:AgentViewResourceKeys.BorderBrushKey}}"
-                                                BorderThickness="1" CornerRadius="10" Padding="12,8">
+                                                BorderThickness="1" CornerRadius="4" Padding="12,8">
                                             <local:MarkdownViewer Text="{Binding Content}"
                                                                   EnableMarkdown="{Binding Options.EnableMarkdown, RelativeSource={RelativeSource AncestorType=local:AgentChatView}}" />
                                         </Border>

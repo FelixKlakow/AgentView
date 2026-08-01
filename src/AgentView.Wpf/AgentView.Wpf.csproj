@@ -11,7 +11,7 @@
 
   <PropertyGroup>
     <PackageId>AgentView.Wpf</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Felix Klakow</Authors>
     <Description>Native WPF agent-conversation chat view: user/assistant/system/tool messages, collapsible tool-call cards with live-updating state, markdown rendering, dark and light themes.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

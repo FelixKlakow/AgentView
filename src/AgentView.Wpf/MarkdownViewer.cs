@@ -24,11 +24,18 @@ public class MarkdownViewer : ContentControl
     /// </summary>
     public static Func<string, string, UIElement?>? FenceRenderer { get; set; }
 
+    static MarkdownViewer()
+    {
+        // A default style (not a local value) supplies the themed foreground so that
+        // per-template settings — e.g. the user bubble's text brush — can override it.
+        DefaultStyleKeyProperty.OverrideMetadata(typeof(MarkdownViewer),
+            new FrameworkPropertyMetadata(typeof(MarkdownViewer)));
+    }
+
     public MarkdownViewer()
     {
         Focusable = false;
         HorizontalContentAlignment = HorizontalAlignment.Stretch;
-        SetResourceReference(ForegroundProperty, AgentViewResourceKeys.TextBrushKey);
         Rebuild();
     }
 

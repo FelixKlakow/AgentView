@@ -7,7 +7,9 @@
     <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.SurfaceBrushKey}" Color="#2B2B2B" />
     <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.SurfaceStrongBrushKey}" Color="#333333" />
     <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.BorderBrushKey}" Color="#3A3A3A" />
-    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.AccentBrushKey}" Color="#4F8EF7" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.AccentBrushKey}" Color="#7E868F" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.UserBubbleBrushKey}" Color="#4A5160" />
+    <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.UserBubbleTextBrushKey}" Color="#F0F1F3" />
     <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.TextBrushKey}" Color="#E8E8E8" />
     <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.SubduedTextBrushKey}" Color="#9A9A9A" />
     <SolidColorBrush x:Key="{x:Static local:AgentViewResourceKeys.SuccessBrushKey}" Color="#3E9B4F" />

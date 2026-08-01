@@ -7,7 +7,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>BlazorAgentView</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Authors>Felix Klakow</Authors>
     <Description>A Blazor component library for rendering AI agent chat interfaces with tool call visualisation, Markdown, streaming, dark mode, and full per-message customisation.</Description>
     <PackageTags>blazor;ai;chat;agent;tool-calls;streaming;markdown;llm;dark-mode;dotnet10;component-library;blazor-component;chat-ui;signalr;blazor-server</PackageTags>

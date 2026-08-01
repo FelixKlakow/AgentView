@@ -10,6 +10,8 @@ public static class AgentViewResourceKeys
     public static ComponentResourceKey SurfaceStrongBrushKey { get; } = new(typeof(AgentChatView), "SurfaceStrong");
     public static ComponentResourceKey BorderBrushKey { get; } = new(typeof(AgentChatView), "Border");
     public static ComponentResourceKey AccentBrushKey { get; } = new(typeof(AgentChatView), "Accent");
+    public static ComponentResourceKey UserBubbleBrushKey { get; } = new(typeof(AgentChatView), "UserBubble");
+    public static ComponentResourceKey UserBubbleTextBrushKey { get; } = new(typeof(AgentChatView), "UserBubbleText");
     public static ComponentResourceKey TextBrushKey { get; } = new(typeof(AgentChatView), "Text");
     public static ComponentResourceKey SubduedTextBrushKey { get; } = new(typeof(AgentChatView), "SubduedText");
     public static ComponentResourceKey SuccessBrushKey { get; } = new(typeof(AgentChatView), "Success");
