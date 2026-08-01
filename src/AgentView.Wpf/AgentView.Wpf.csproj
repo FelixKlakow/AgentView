@@ -15,15 +15,21 @@
     <Authors>Felix Klakow</Authors>
     <Description>Native WPF agent-conversation chat view: user/assistant/system/tool messages, collapsible tool-call cards with live-updating state, markdown rendering, dark and light themes.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/felixklakow/AgentView.Wpf</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/felixklakow/AgentView.Wpf</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/FelixKlakow/AgentView</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/FelixKlakow/AgentView</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
     <PackageTags>wpf;chat;agent;ai;markdown;conversation</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <Copyright>Copyright © 2026 Felix Klakow</Copyright>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="NUGET_README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" Condition="Exists('..\..\icon.png')" />
   </ItemGroup>
 
   <ItemGroup>

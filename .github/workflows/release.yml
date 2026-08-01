@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build AgentView.slnx --configuration Release
+
+      - name: Test
+        run: dotnet test AgentView.slnx --no-build --configuration Release
+
+      - name: Pack
+        run: |
+          dotnet pack src/BlazorAgentView/BlazorAgentView.csproj --no-build --configuration Release --output nupkg
+          dotnet pack src/BlazorAgentView.SignalR/BlazorAgentView.SignalR.csproj --no-build --configuration Release --output nupkg
+          dotnet pack src/AgentView.Wpf/AgentView.Wpf.csproj --no-build --configuration Release --output nupkg
+
+      - name: Push to NuGet
+        run: dotnet nuget push "nupkg/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

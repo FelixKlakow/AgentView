@@ -50,11 +50,11 @@ public partial class MainWindow : Window
             The core build step is:
 
             ```powershell
-            dotnet build AgentView.Wpf.slnx
-            dotnet test AgentView.Wpf.slnx
+            dotnet build AgentView.slnx
+            dotnet test AgentView.slnx
             ```
 
-            More details in the [README](https://github.com/felixklakow/AgentView.Wpf).
+            More details in the [README](https://github.com/FelixKlakow/AgentView).
             """);
 
         // A running tool that completes with output after a delay — proves live mutation works.

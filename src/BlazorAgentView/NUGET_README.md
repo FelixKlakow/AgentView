@@ -3,10 +3,10 @@
 A Blazor component library for rendering AI agent chat interfaces with first-class tool call visualisation, Markdown support, streaming, dark mode, and full per-message customisation — all in a single `<AgentChatView>` component.
 
 [![NuGet](https://img.shields.io/nuget/v/BlazorAgentView?style=flat-square)](https://www.nuget.org/packages/BlazorAgentView)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://github.com/FelixKlakow/BlazorAgentView/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://github.com/FelixKlakow/AgentView/blob/main/LICENSE)
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?style=flat-square)](https://dotnet.microsoft.com/)
 
-Full documentation and source: **[github.com/FelixKlakow/BlazorAgentView](https://github.com/FelixKlakow/BlazorAgentView)**
+Full documentation and source: **[github.com/FelixKlakow/AgentView](https://github.com/FelixKlakow/AgentView)**
 
 ---
 

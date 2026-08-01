@@ -11,8 +11,8 @@
     <Authors>Felix Klakow</Authors>
     <Description>A Blazor component library for rendering AI agent chat interfaces with tool call visualisation, Markdown, streaming, dark mode, and full per-message customisation.</Description>
     <PackageTags>blazor;ai;chat;agent;tool-calls;streaming;markdown;llm;dark-mode;dotnet10;component-library;blazor-component;chat-ui;signalr;blazor-server</PackageTags>
-    <PackageProjectUrl>https://github.com/FelixKlakow/BlazorAgentView</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/FelixKlakow/BlazorAgentView</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/FelixKlakow/AgentView</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/FelixKlakow/AgentView</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
@@ -28,7 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Include NuGet README and icon in the NuGet package -->
-    <None Include="..\..\NUGET_README.md" Pack="true" PackagePath="\" />
+    <None Include="NUGET_README.md" Pack="true" PackagePath="\" />
     <None Include="..\..\icon.png" Pack="true" PackagePath="\" Condition="Exists('..\..\icon.png')" />
   </ItemGroup>
 </Project>

@@ -1,13 +1,28 @@
-# AgentView.Wpf
+# AgentView
 
-Native WPF agent-conversation chat view — a WPF sibling of the Blazor package **BlazorAgentView**.
-Renders user / assistant / system / tool messages with collapsible tool-call cards, live-updating
-tool state, markdown (via [Markdig](https://github.com/xoofx/markdig)), auto-scroll, and a dark
-theme by default (light theme included).
+Chat views for AI agent conversations — user / assistant / system / tool messages, collapsible
+tool-call cards with live-updating state, markdown rendering, streaming, and dark/light themes.
+One repository, one model, multiple UI stacks.
 
-![Screenshot placeholder](docs/screenshot.png)
+| Package | Stack | NuGet |
+| --- | --- | --- |
+| [BlazorAgentView](src/BlazorAgentView) | Blazor | [![NuGet](https://img.shields.io/nuget/v/BlazorAgentView.svg)](https://www.nuget.org/packages/BlazorAgentView) |
+| [BlazorAgentView.SignalR](src/BlazorAgentView.SignalR) | Blazor + SignalR | [![NuGet](https://img.shields.io/nuget/v/BlazorAgentView.SignalR.svg)](https://www.nuget.org/packages/BlazorAgentView.SignalR) |
+| [AgentView.Wpf](src/AgentView.Wpf) | WPF (Windows) | [![NuGet](https://img.shields.io/nuget/v/AgentView.Wpf.svg)](https://www.nuget.org/packages/AgentView.Wpf) |
 
-## Usage
+## Blazor
+
+```razor
+<AgentChatView Messages="@messages" Options="@options" OnSendMessage="HandleSend" />
+```
+
+See [src/BlazorAgentView/NUGET_README.md](src/BlazorAgentView/NUGET_README.md) for the full
+feature tour (tool-call visualisation, custom per-message renderers, streaming, dark mode) and
+[src/BlazorAgentView.SignalR](src/BlazorAgentView.SignalR) for streaming messages over SignalR.
+
+![BlazorAgentView dark theme](assets/screenshot-dark.png)
+
+## WPF
 
 ```xml
 <Window xmlns:av="clr-namespace:AgentView.Wpf;assembly=AgentView.Wpf">
@@ -15,68 +30,29 @@ theme by default (light theme included).
 </Window>
 ```
 
-```csharp
-var messages = new ObservableCollection<ChatMessage>();
-Chat.Options = new AgentChatOptions
-{
-    ShowTimestamps = true,
-    EnableMarkdown = true,
-    AutoScroll = true,
-    ToolCallDisplay = ToolCallDisplayMode.Collapsible,
-    Theme = "dark"
-};
-Chat.Messages = messages;
+See [src/AgentView.Wpf/NUGET_README.md](src/AgentView.Wpf/NUGET_README.md) for usage, theming,
+and the pluggable fence renderer (e.g. mermaid diagrams).
 
-messages.Add(new ChatMessage { Role = MessageRole.User, Content = "Hi!", Timestamp = DateTimeOffset.Now });
+## Repository layout
 
-// Tool correlation: append the card while the tool runs, then mutate it when the result arrives —
-// the UI updates live.
-var call = new ToolCall { ToolName = "Bash", Input = "ls -la", State = ToolState.Running };
-var toolMessage = new ChatMessage { Role = MessageRole.Tool };
-toolMessage.ToolCalls.Add(call);
-messages.Add(toolMessage);
-// later:
-call.Output = "…";
-call.State = ToolState.Success;
+- `src/` — the three library projects, each producing one NuGet package
+- `samples/` — runnable demos: `BlazorAgentView.Demo`, `AgentView.Wpf.Demo`
+- `tests/` — unit tests
+
+## Building
+
+```bash
+dotnet build AgentView.slnx
+dotnet test AgentView.slnx
 ```
 
-## Theming
+Requires the .NET 10 SDK; the WPF projects build on Windows only.
 
-`AgentChatOptions.Theme` is `"dark"` (default) or `"light"`. All colors resolve via
-`DynamicResource` against the keys in `AgentViewResourceKeys` — override any of them in your
-application, window, or directly on the `AgentChatView` to re-theme:
+## Releasing
 
-| Key (`AgentViewResourceKeys`) | Blazor CSS variable equivalent | Dark default |
-| --- | --- | --- |
-| `BackgroundBrushKey` | `--bav-bg` | `#202020` |
-| `SurfaceBrushKey` | `--bav-surface` | `#2B2B2B` |
-| `SurfaceStrongBrushKey` | `--bav-surface-strong` | `#333333` |
-| `BorderBrushKey` | `--bav-border` | `#3A3A3A` |
-| `AccentBrushKey` | `--bav-accent` | `#4F8EF7` |
-| `TextBrushKey` | — | `#E8E8E8` |
-| `SubduedTextBrushKey` | — | `#9A9A9A` |
-| `SuccessBrushKey` | — | `#3E9B4F` |
-| `ErrorBrushKey` | — | `#D9534F` |
-| `MonospaceFontFamilyKey` | — | Cascadia Mono / Consolas |
-
-```xml
-<Application.Resources>
-    <SolidColorBrush x:Key="{x:Static av:AgentViewResourceKeys.AccentBrushKey}" Color="#FF8800" />
-</Application.Resources>
-```
-
-The Blazor version's `CssVariables` dictionary does **not** carry over — use the resource keys
-above instead. The light palette ships as `Themes/Light.xaml` and can also be merged manually.
-
-## Notes
-
-- `Messages` accepts any `IEnumerable<ChatMessage>`; use an `ObservableCollection` for streaming.
-- Message content is selectable (read-only text boxes / rich text).
-- Markdown: headings, emphasis, inline code, fenced code blocks (no syntax highlighting yet),
-  nested lists, links, blockquotes, pipe tables, horizontal rules.
-- Build: `dotnet build AgentView.Wpf.slnx` · test: `dotnet test AgentView.Wpf.slnx` ·
-  demo: `dotnet run --project samples/AgentView.Wpf.Demo`.
+Push a tag `v*` (e.g. `v2026.08.01`) — CI packs all three packages and pushes any new versions
+to NuGet (existing versions are skipped). Package versions live in each project's `.csproj`.
 
 ## License
 
-MIT © 2026 Felix Klakow
+[MIT](LICENSE)

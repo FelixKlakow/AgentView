@@ -8,15 +8,15 @@
     <PackageId>BlazorAgentView.SignalR</PackageId>
     <Version>1.0.0</Version>
     <Authors>Felix Klakow</Authors>
-    <Description>SignalR integration for BlazorAgentView — hub constants and helpers for streaming AI agent messages over a real-time SignalR connection.</Description>
+    <Description>SignalR integration for BlazorAgentView â€” hub constants and helpers for streaming AI agent messages over a real-time SignalR connection.</Description>
     <PackageTags>blazor;ai;chat;agent;signalr;streaming;real-time;blazor-server;dotnet10;component-library</PackageTags>
-    <PackageProjectUrl>https://github.com/FelixKlakow/BlazorAgentView</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/FelixKlakow/BlazorAgentView</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/FelixKlakow/AgentView</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/FelixKlakow/AgentView</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <Copyright>Copyright © 2026 Felix Klakow</Copyright>
+    <Copyright>Copyright Â© 2026 Felix Klakow</Copyright>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
