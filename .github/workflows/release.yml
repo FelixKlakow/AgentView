@@ -7,6 +7,9 @@ on:
 jobs:
   publish:
     runs-on: windows-latest
+    permissions:
+      id-token: write  # OIDC token for NuGet trusted publishing
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -27,5 +30,11 @@ jobs:
           dotnet pack src/BlazorAgentView.SignalR/BlazorAgentView.SignalR.csproj --no-build --configuration Release --output nupkg
           dotnet pack src/AgentView.Wpf/AgentView.Wpf.csproj --no-build --configuration Release --output nupkg
 
+      - name: NuGet login (OIDC -> temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: FelixK
+
       - name: Push to NuGet
-        run: dotnet nuget push "nupkg/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push "nupkg/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
