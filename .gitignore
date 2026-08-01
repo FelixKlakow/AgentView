@@ -482,3 +482,6 @@ $RECYCLE.BIN/
 *.swp
 
 artifacts/
+
+# Local NuGet pack output
+nupkg/

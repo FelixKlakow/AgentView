@@ -1,0 +1,90 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using BlazorAgentView.Components
+@using BlazorAgentView.Models
+@implements IAsyncDisposable
+
+<AgentChatView @ref="_chatView"
+               Messages="_messages"
+               SystemPrompt="SystemPrompt"
+               Options="Options"
+               OnCancelTool="OnCancelTool"
+               ToolContentTemplate="ToolContentTemplate"
+               UserInputContent="UserInputContent" />
+
+@if (!string.IsNullOrEmpty(_connectionError))
+{
+    <div class="bav-connection-error">⚠ @_connectionError</div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string HubUrl { get; set; } = string.Empty;
+    [Parameter] public string? SystemPrompt { get; set; }
+    [Parameter] public AgentChatOptions Options { get; set; } = new();
+    [Parameter] public EventCallback<string> OnCancelTool { get; set; }
+    [Parameter] public RenderFragment<ToolCall>? ToolContentTemplate { get; set; }
+    [Parameter] public RenderFragment? UserInputContent { get; set; }
+    [Parameter] public string ReceiveMessageMethod { get; set; } = AgentChatSignalRHub.ReceiveMessage;
+    [Parameter] public string AppendContentMethod { get; set; } = AgentChatSignalRHub.AppendContent;
+    [Parameter] public string UpdateToolMethod { get; set; } = AgentChatSignalRHub.UpdateTool;
+
+    private AgentChatView? _chatView;
+    private HubConnection? _hubConnection;
+    // Authoritative list of messages. We always mutate this same instance so
+    // AgentChatView (which compares Messages by reference) keeps its internal
+    // state intact across re-renders of this component.
+    private readonly List<ChatMessage> _messages = new();
+    private string? _connectionError;
+    private bool _started;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Defer connection setup until the first render completes so that
+        // `_chatView` (@ref) is populated before any hub callback can fire.
+        if (!firstRender || _started) return;
+        _started = true;
+
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(HubUrl)
+            .WithAutomaticReconnect()
+            .Build();
+
+        // SignalR raises callbacks off the renderer's synchronization context.
+        // Marshal every UI mutation through InvokeAsync so StateHasChanged runs
+        // on the dispatcher and we never race against the renderer.
+        _hubConnection.On<ChatMessage>(ReceiveMessageMethod, message =>
+            InvokeAsync(() =>
+            {
+                _messages.Add(message);
+                _chatView?.AddMessage(message);
+            }));
+
+        _hubConnection.On<string, string>(AppendContentMethod, (messageId, text) =>
+            InvokeAsync(() =>
+            {
+                // _messages and _chatView's internal list share the same
+                // ChatMessage instances (AgentChatView does a shallow copy),
+                // so mutating one in place is reflected in both. We still
+                // call the imperative API to trigger a re-render.
+                _chatView?.AppendToMessage(messageId, text);
+            }));
+
+        _hubConnection.On<string, string, ToolState, string?>(UpdateToolMethod, (messageId, toolCallId, state, output) =>
+            InvokeAsync(() => _chatView?.UpdateToolState(messageId, toolCallId, state, output)));
+
+        try
+        {
+            await _hubConnection.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            _connectionError = $"Failed to connect: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection != null)
+            await _hubConnection.DisposeAsync();
+    }
+}

@@ -1,0 +1,129 @@
+.agent-demo-page {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.agent-demo-header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 600;
+}
+
+.agent-demo-subtitle {
+    margin: 4px 0 0 0;
+    color: #5b6472;
+    font-size: 0.95rem;
+}
+
+.agent-demo-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f7f8fa;
+    border: 1px solid #e3e5ea;
+    border-radius: 10px;
+}
+
+.agent-demo-toolbar-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    align-items: flex-end;
+}
+
+.agent-demo-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: #5b6472;
+}
+
+    .agent-demo-field select {
+        font-size: 0.9rem;
+        padding: 4px 8px;
+        border: 1px solid #c9cdd6;
+        border-radius: 6px;
+        background: #fff;
+        min-width: 180px;
+    }
+
+.agent-demo-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: #1f2328;
+}
+
+.agent-demo-btn {
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    border-radius: 6px;
+    border: 1px solid #1f6feb;
+    background: #1f6feb;
+    color: #fff;
+    cursor: pointer;
+}
+
+    .agent-demo-btn:hover:not(:disabled) {
+        background: #1858bd;
+        border-color: #1858bd;
+    }
+
+    .agent-demo-btn:disabled {
+        opacity: 0.55;
+        cursor: default;
+    }
+
+/* ── Custom web_search tool renderer ─────────────────────────────────── */
+.demo-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.demo-search-header {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #5b6472;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e3e5ea;
+    margin-bottom: 2px;
+}
+
+.demo-search-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #1f2328;
+    line-height: 1.45;
+}
+
+.demo-search-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: #5b6472;
+}
+    .agent-demo-btn:disabled {
+        opacity: 0.6;
+        cursor: default;
+    }
+
+.agent-demo-stage {
+    height: 640px;
+    border: 1px solid #d0d7de;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}

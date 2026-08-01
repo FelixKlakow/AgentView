@@ -1,0 +1,49 @@
+@inject IServiceProvider Services
+
+@if (Options.ShowSystemPromptBanner && !string.IsNullOrEmpty(SystemPrompt))
+{
+    <div class="bav-system-prompt-banner @(_expanded ? "bav-system-prompt-expanded" : null)">
+        <button type="button"
+                class="bav-system-prompt-toggle"
+                aria-expanded="@(_expanded ? "true" : "false")"
+                aria-controls="@_contentId"
+                @onclick="ToggleExpanded">
+            <span class="bav-system-prompt-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 2.5a1.2 1.2 0 100 2.4 1.2 1.2 0 000-2.4zm0 3.5c-2 0-3 1-3 3v1.6c0 .8-.4 1.4-1 1.9h8c-.6-.5-1-1.1-1-1.9V9c0-2-1-3-3-3z" fill="currentColor" /></svg>
+            </span>
+            <span class="bav-system-prompt-label">System Prompt</span>
+            <span class="bav-system-prompt-spacer"></span>
+            <span class="bav-expand-chevron @(_expanded ? "bav-expand-chevron-open" : null)" aria-hidden="true">
+                <svg viewBox="0 0 12 12" width="10" height="10"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+        </button>
+        @if (_expanded)
+        {
+            <div id="@_contentId" class="bav-system-prompt-content">
+                @if (Options.SystemPromptMarkdown)
+                {
+                    <div class="bav-markdown-content bav-system-prompt-markdown">@Renderer.Render(SystemPrompt)</div>
+                }
+                else
+                {
+                    <pre>@SystemPrompt</pre>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private static readonly DefaultMarkdownRenderer _defaultRenderer = new();
+
+    [Parameter] public string? SystemPrompt { get; set; }
+    [Parameter] public AgentChatOptions Options { get; set; } = new();
+
+    private IMarkdownRenderer Renderer =>
+        (IMarkdownRenderer?)Services.GetService(typeof(IMarkdownRenderer)) ?? _defaultRenderer;
+
+    private bool _expanded = false;
+    private readonly string _contentId = $"bav-system-prompt-{Guid.NewGuid():N}";
+
+    private void ToggleExpanded() => _expanded = !_expanded;
+}

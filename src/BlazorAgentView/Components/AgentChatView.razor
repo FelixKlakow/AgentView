@@ -1,0 +1,29 @@
+<div class="bav-chat-view @ThemeClass" style="@CssVariableStyle">
+    <SystemPromptBanner SystemPrompt="@SystemPrompt" Options="Options" />
+
+    <div class="bav-messages-container" @ref="_messagesRef">
+        @if (Options.EnableVirtualization)
+        {
+            <Virtualize Items="_messageList" Context="message">
+                <MessageBubble Message="message" Options="Options" OnCancelTool="OnCancelTool" ToolContentTemplate="ToolContentTemplate" />
+            </Virtualize>
+        }
+        else
+        {
+            @foreach (var message in _messageList)
+            {
+                <MessageBubble Message="message" Options="Options" OnCancelTool="OnCancelTool" ToolContentTemplate="ToolContentTemplate" />
+            }
+        }
+    </div>
+
+    @if (UserInputContent != null)
+    {
+        <div class="bav-input-area">
+            @UserInputContent
+        </div>
+    }
+</div>
+
+@code {
+}

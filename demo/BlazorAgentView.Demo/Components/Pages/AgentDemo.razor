@@ -1,0 +1,311 @@
+@page "/agent-demo"
+@rendermode InteractiveServer
+@using BlazorAgentView.Components
+@using BlazorAgentView.Models
+
+<PageTitle>Agent Demo</PageTitle>
+
+<div class="agent-demo-page">
+    <header class="agent-demo-header">
+        <h1>BlazorAgentView</h1>
+        <p class="agent-demo-subtitle">Interactive demo &mdash; explore the chat surface, tool calls and theming.</p>
+    </header>
+
+    <section class="agent-demo-toolbar" aria-label="Demo settings">
+        <div class="agent-demo-toolbar-group">
+            <label class="agent-demo-field">
+                <span>Theme</span>
+                <select @bind="_theme">
+                    <option value="">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </label>
+            <label class="agent-demo-field">
+                <span>Tool calls</span>
+                <select @bind="_toolDisplay">
+                    <option value="@ToolCallDisplayMode.Collapsible">Collapsible (closed)</option>
+                    <option value="@ToolCallDisplayMode.CollapsibleExpanded">Collapsible (open)</option>
+                    <option value="@ToolCallDisplayMode.AlwaysExpanded">Always expanded</option>
+                    <option value="@ToolCallDisplayMode.HeaderOnly">Header only</option>
+                </select>
+            </label>
+        </div>
+        <div class="agent-demo-toolbar-group">
+            <label class="agent-demo-toggle">
+                <input type="checkbox" @bind="_showTimestamps" />
+                <span>Timestamps</span>
+            </label>
+            <label class="agent-demo-toggle">
+                <input type="checkbox" @bind="_enableMarkdown" />
+                <span>Markdown</span>
+            </label>
+            <label class="agent-demo-toggle">
+                <input type="checkbox" @bind="_assistantBubble" />
+                <span>Agent bubble</span>
+            </label>
+            <label class="agent-demo-toggle">
+                <input type="checkbox" @bind="_showSystemPromptBanner" />
+                <span>System prompt banner</span>
+            </label>
+            <button type="button" class="agent-demo-btn" @onclick="SimulateStreaming" disabled="@_isStreaming">
+                @(_isStreaming ? "Streaming…" : "Simulate streaming")
+            </button>
+        </div>
+    </section>
+
+    <div class="agent-demo-stage" style="height:640px;overflow:hidden;">
+        <AgentChatView @ref="_chatView"
+                       Messages="_messages"
+                       SystemPrompt="@_systemPrompt"
+                       Options="_options"
+                       OnCancelTool="HandleCancel"
+                       ToolContentTemplate="ToolTemplate">
+        </AgentChatView>
+    </div>
+</div>
+
+
+
+@code {
+    private AgentChatView _chatView = default!;
+    private List<ChatMessage> _messages = new();
+    private string _theme = "";
+    private bool _showTimestamps = true;
+    private bool _enableMarkdown = true;
+    private bool _isStreaming = false;
+    private bool _assistantBubble = false;
+    private bool _showSystemPromptBanner = true;
+    private ToolCallDisplayMode _toolDisplay = ToolCallDisplayMode.Collapsible;
+
+    private string _systemPrompt = "You are a helpful AI assistant with access to tools. You can search the web, run code, and retrieve information.";
+
+    private AgentChatOptions _options => new AgentChatOptions
+    {
+        ShowTimestamps = _showTimestamps,
+        EnableMarkdown = _enableMarkdown,
+        Theme = string.IsNullOrEmpty(_theme) ? null : _theme,
+        ToolCallDisplay = _toolDisplay,
+        EnableAssistantBubble = _assistantBubble,
+        ShowSystemPromptBanner = _showSystemPromptBanner
+    };
+
+    // Custom renderer: web_search gets a structured card; all others use the default.
+    private RenderFragment<ToolCall> ToolTemplate => tool =>
+    {
+        if (tool.ToolName != "web_search") return null!;
+        return __builder =>
+        {
+            __builder.OpenElement(0, "div");
+            __builder.AddAttribute(1, "class", "demo-search-results");
+
+            __builder.OpenElement(2, "div");
+            __builder.AddAttribute(3, "class", "demo-search-header");
+            __builder.AddContent(4, "Search results");
+            __builder.CloseElement();
+
+            var lines = (tool.Output ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            int seq = 5;
+            foreach (var line in lines)
+            {
+                __builder.OpenElement(seq++, "div");
+                __builder.AddAttribute(seq++, "class", "demo-search-row");
+                __builder.AddMarkupContent(seq++,
+                    """<svg class="demo-search-icon" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M10.5 10.5l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>""");
+                __builder.OpenElement(seq++, "span");
+                __builder.AddContent(seq++, line);
+                __builder.CloseElement();
+                __builder.CloseElement();
+            }
+
+            __builder.CloseElement();
+        };
+    };
+
+    // Tool type icons
+    private RenderFragment SearchIcon =>
+        @<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="6.5" cy="6.5" r="4" /><path d="M11 11l3 3" /></svg>;
+
+    private RenderFragment FileIcon =>
+        @<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M3 1h7l4 4v10H3V1z" /><path d="M10 1v4h4" /></svg>;
+
+    private RenderFragment FolderIcon =>
+        @<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M1 4h5l2 2h7v8H1V4z" /></svg>;
+
+    private RenderFragment TestIcon =>
+        @<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 2h6" /><path d="M8 2v5l3 3" /><circle cx="8" cy="10" r="4" /></svg>;
+
+    private RenderFragment DeployIcon =>
+        @<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1l3 5H5l3-5z" /><path d="M2 14h12" /><path d="M8 6v8" /></svg>;
+
+    protected override void OnInitialized()
+    {
+        _messages = new List<ChatMessage>
+        {
+            new ChatMessage
+            {
+                Role = MessageRole.User,
+                Content = "Hello! Can you search for the latest news about AI and then summarize it?",
+                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-12)
+            },
+            new ChatMessage
+            {
+                Role = MessageRole.Assistant,
+                Content = "Sure! Let me search for the latest AI news for you.",
+                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-11),
+                ToolCalls = new List<ToolCall>
+                {
+                    new ToolCall
+                    {
+                        // web_search uses the custom ToolContentTemplate renderer
+                        ToolName = "web_search",
+                        Subtitle = "latest AI news 2025",
+                        Input = """{"query": "latest AI news 2025", "max_results": 3}""",
+                        Output = "GPT-5 Released — OpenAI releases flagship model\nAI Regulation Update — EU finalises AI Act enforcement\nOpen-Source LLMs — Llama 4 tops benchmarks",
+                        State = ToolState.Success,
+                        Icon = SearchIcon
+                    }
+                }
+            },
+            new ChatMessage
+            {
+                Role = MessageRole.Assistant,
+                Content = "Here's a summary of the latest AI news:\n\n## Key Highlights\n\n1. **GPT-5 Released** \u2014 OpenAI released their latest model with significant improvements in reasoning and code generation.\n2. **AI Regulation Update** \u2014 New frameworks for AI regulation are being discussed globally.\n3. **Open-Source LLMs** \u2014 The open-source ecosystem continues to narrow the gap with proprietary models.\n\n> The pace of AI development continues to accelerate in 2025.\n\n```python\n# Example AI code\nresponse = model.chat(\"Hello!\")\n```",
+                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-10)
+            },
+            // Per-message customisation: hidden header
+            new ChatMessage
+            {
+                Role = MessageRole.Assistant,
+                Content = "*This message has no header row* \u2014 both role label and timestamp are hidden via `RoleLabel = \"\"` and `ShowTimestamp = false`.",
+                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-9),
+                RoleLabel = "",
+                ShowTimestamp = false
+            },
+            // Per-message customisation: custom label + no timestamp
+            new ChatMessage
+            {
+                Role = MessageRole.User,
+                Content = "Show me mixed tool display modes \u2014 some expanded, some header-only.",
+                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-7),
+                RoleLabel = "Felix",
+                ShowTimestamp = false
+            },
+            new ChatMessage
+            {
+                Role = MessageRole.Assistant,
+                Content = "Here are tool calls with per-tool `DisplayMode` overrides (independent of the global selector above):",
+                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-6),
+                ToolCalls = new List<ToolCall>
+                {
+                    new ToolCall
+                    {
+                        ToolName = "read_file",
+                        Subtitle = "src/main.py",
+                        Icon = FileIcon,
+                        Input = """{"path": "src/main.py"}""",
+                        Output = "def main():\n    print(\"Hello, world!\")\n\nif __name__ == \"__main__\":\n    main()",
+                        State = ToolState.Success,
+                        DisplayMode = ToolCallDisplayMode.AlwaysExpanded
+                    },
+                    new ToolCall
+                    {
+                        ToolName = "list_directory",
+                        Subtitle = "src/",
+                        Icon = FolderIcon,
+                        Input = """{"path": "src/"}""",
+                        Output = "main.py  utils.py  models/  tests/",
+                        State = ToolState.Success,
+                        DisplayMode = ToolCallDisplayMode.HeaderOnly
+                    },
+                    new ToolCall
+                    {
+                        ToolName = "run_tests",
+                        Subtitle = "42 passed",
+                        Icon = TestIcon,
+                        Input = """{"suite": "unit", "verbose": true}""",
+                        Output = "Ran 42 tests in 1.23s\n\nOK",
+                        State = ToolState.Success,
+                        DisplayMode = ToolCallDisplayMode.CollapsibleExpanded
+                    },
+                    new ToolCall
+                    {
+                        ToolName = "deploy",
+                        Subtitle = "staging",
+                        Icon = DeployIcon,
+                        Input = """{"env": "staging"}""",
+                        Output = "Error: insufficient permissions",
+                        State = ToolState.Failed,
+                        DisplayMode = ToolCallDisplayMode.AlwaysExpanded
+                    }
+                }
+            },
+            new ChatMessage
+            {
+                Role = MessageRole.User,
+                Content = "What does a pending/running tool look like?",
+                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-2)
+            },
+            new ChatMessage
+            {
+                Role = MessageRole.Assistant,
+                Content = "Here are the active states \u2014 you can cancel the pending one:",
+                Timestamp = DateTimeOffset.UtcNow.AddMinutes(-1),
+                ToolCalls = new List<ToolCall>
+                {
+                    new ToolCall
+                    {
+                        ToolName = "long_running_job",
+                        Input = """{"task": "data_processing", "records": 50000}""",
+                        State = ToolState.Running
+                    },
+                    new ToolCall
+                    {
+                        ToolName = "queued_task",
+                        Input = """{"priority": "normal"}""",
+                        State = ToolState.Pending
+                    }
+                }
+            }
+        };
+    }
+
+    private async Task SimulateStreaming()
+    {
+        _isStreaming = true;
+        var msg = new ChatMessage
+        {
+            Role = MessageRole.Assistant,
+            Content = "",
+            IsStreaming = true,
+            Timestamp = DateTimeOffset.UtcNow
+        };
+        _chatView.AddMessage(msg);
+
+        var text = "I'm streaming a response word by word. This demonstrates the streaming capability of the BlazorAgentView component! **Bold text** and *italics* work too.";
+        var words = text.Split(' ');
+
+        foreach (var word in words)
+        {
+            await Task.Delay(80);
+            _chatView.AppendToMessage(msg.Id, word + " ");
+        }
+
+        msg.IsStreaming = false;
+        _isStreaming = false;
+        StateHasChanged();
+    }
+
+    private Task HandleCancel(string toolCallId)
+    {
+        foreach (var msg in _messages)
+        {
+            var tool = msg.ToolCalls.FirstOrDefault(t => t.Id == toolCallId);
+            if (tool != null)
+            {
+                _chatView.UpdateToolState(msg.Id, toolCallId, ToolState.Cancelled);
+                break;
+            }
+        }
+        return Task.CompletedTask;
+    }
+}

@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AddRazorSupportForMvc>false</AddRazorSupportForMvc>
+
+    <!-- NuGet package metadata -->
+    <PackageId>BlazorAgentView</PackageId>
+    <Version>1.1.0</Version>
+    <Authors>Felix Klakow</Authors>
+    <Description>A Blazor component library for rendering AI agent chat interfaces with tool call visualisation, Markdown, streaming, dark mode, and full per-message customisation.</Description>
+    <PackageTags>blazor;ai;chat;agent;tool-calls;streaming;markdown;llm;dark-mode;dotnet10;component-library;blazor-component;chat-ui;signalr;blazor-server</PackageTags>
+    <PackageProjectUrl>https://github.com/FelixKlakow/BlazorAgentView</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/FelixKlakow/BlazorAgentView</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <Copyright>Copyright © 2026 Felix Klakow</Copyright>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.0" />
+    <PackageReference Include="Markdig" Version="0.40.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Include NuGet README and icon in the NuGet package -->
+    <None Include="..\..\NUGET_README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\icon.png" Pack="true" PackagePath="\" Condition="Exists('..\..\icon.png')" />
+  </ItemGroup>
+</Project>
