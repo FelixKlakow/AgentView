@@ -123,6 +123,14 @@
   border: 1px solid var(--bav-border);
 }
 
+/* Plain-text branch: also used when markdown rendering fails for a message,
+   so line breaks in the original text must survive. */
+.bav-text-content {
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .bav-markdown-content { font-size: 0.95rem; }
 .bav-markdown-content > :first-child { margin-top: 0; }
 .bav-markdown-content > :last-child { margin-bottom: 0; }

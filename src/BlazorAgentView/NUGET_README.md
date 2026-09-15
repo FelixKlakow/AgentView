@@ -15,7 +15,7 @@ Full documentation and source: **[github.com/FelixKlakow/AgentView](https://gith
 - 💬 **Chat bubbles** — user bubbles, borderless agent messages, collapsible system-prompt banner
 - 🔧 **Tool call cards** — 4 display modes, cancel button, animated state icons, custom type icons
 - 🏷️ **Tool subtitles** — optional secondary text beside the tool name
-- ✍️ **Markdown** — Markdig pipeline, swappable via `IMarkdownRenderer`
+- ✍️ **Markdown** — Markdig pipeline, swappable via `IMarkdownRenderer`, never throws out of the render tree
 - 📡 **Streaming** — animated typing indicator, incremental token append
 - 🌙 **Dark mode** — built-in dark theme + full CSS variable theming
 - 🏷️ **Per-message customisation** — custom labels, timestamps, and `RenderFragment` content
@@ -83,7 +83,51 @@ new ToolCall
 
 ---
 
+## Markdown rendering
+
+Markdown is rendered with Markdig (`UseAdvancedExtensions()`, raw HTML disabled) through the
+`IMarkdownRenderer` service. Register the default one — and optionally tune the pipeline — with:
+
+```csharp
+builder.Services.AddBlazorAgentView();
+
+// or, with a tuned pipeline (UseAdvancedExtensions() is already applied,
+// raw HTML stays disabled whatever the callback does):
+builder.Services.AddBlazorAgentView(pipeline => pipeline.UseEmojiAndSmiley());
+```
+
+A renderer can also be set per view via `AgentChatOptions.MarkdownRenderer`, which takes
+precedence over the DI registration.
+
+### Failed renders degrade, they never crash
+
+Markdig rejects some inputs outright — most notably text that trips its nesting limit, which
+agent output hits easily: a block of 32 or more pipe-delimited lines *without* a table separator
+row produces one nested delimiter inline per `|`. Rendering happens inside the component's render
+tree, so an escaping exception would terminate a Blazor Server circuit and freeze the whole
+application.
+
+Instead, rendering degrades in steps: the configured pipeline, then a plain CommonMark pipeline
+(no pipe tables), then HTML-encoded plain text with the line breaks preserved. The same guard
+wraps the call site, so a custom `IMarkdownRenderer` that throws only costs that one message its
+formatting; the message is shown as plain text and the failure is cached so streaming deltas do
+not re-parse it.
+
+> 💡 This covers markdown only. On Blazor Server, wrapping `<AgentChatView>` in an
+> `<ErrorBoundary>` is still recommended — any component can throw.
+
+---
+
 ## Changelog
+
+### Unreleased
+- **Markdown rendering never takes down the circuit** — `DefaultMarkdownRenderer.Render` no longer
+  throws (it degrades to a CommonMark pipeline and then to encoded plain text), and `MessageBubble`
+  / `SystemPromptBanner` fall back to plain text when a custom `IMarkdownRenderer` throws. Fixes
+  the freeze caused by 32+ pipe-delimited lines without a table separator row.
+- **Configurable Markdig pipeline** — `AddBlazorAgentView(pipeline => ...)` and
+  `DefaultMarkdownRenderer.CreatePipeline(...)`.
+- **`AgentChatOptions.MarkdownRenderer`** — per-view renderer override.
 
 ### 1.1.0
 - **Custom tool type icons** — `ToolCall.Icon` (`RenderFragment?`) renders a custom SVG/HTML icon on the right side of the tool card header as a visual type indicator.

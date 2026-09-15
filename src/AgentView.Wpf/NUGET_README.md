@@ -74,6 +74,11 @@ above instead. The light palette ships as `Themes/Light.xaml` and can also be me
 - Message content is selectable (read-only text boxes / rich text).
 - Markdown: headings, emphasis, inline code, fenced code blocks (no syntax highlighting yet),
   nested lists, links, blockquotes, pipe tables, horizontal rules.
+- Markdown rendering never throws: content that Markdig rejects — a long block of pipe-delimited
+  lines keeps one nested inline per `|` — falls back to plain text for that message instead of
+  reaching the dispatcher as an unhandled exception. Nesting past 64 levels is flattened to text
+  rather than recursed over, and a `FenceRenderer` that throws falls back to the default code
+  block.
 - Build: `dotnet build AgentView.slnx` · test: `dotnet test AgentView.slnx` ·
   demo: `dotnet run --project samples/AgentView.Wpf.Demo`.
 

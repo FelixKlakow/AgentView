@@ -19,9 +19,9 @@
         {
             @Message.CustomContent
         }
-        else if (Options.EnableMarkdown && !string.IsNullOrEmpty(Message.Content))
+        else if (Options.EnableMarkdown && !string.IsNullOrEmpty(Message.Content) && TryRenderMarkdown(Message.Content, out var markdown))
         {
-            <div class="bav-markdown-content">@Renderer.Render(Message.Content)</div>
+            <div class="bav-markdown-content">@markdown</div>
         }
         else if (!string.IsNullOrEmpty(Message.Content))
         {
@@ -51,8 +51,33 @@
     [Parameter] public EventCallback<string> OnCancelTool { get; set; }
     [Parameter] public RenderFragment<ToolCall>? ToolContentTemplate { get; set; }
 
+    // Id of the message whose markdown could not be rendered. Cached so a poisoned
+    // message is not re-parsed on every streaming delta, and so the bubble keeps
+    // falling back to plain text while that message is being appended to.
+    private string? _markdownFailedMessageId;
+
     private IMarkdownRenderer Renderer =>
-        (IMarkdownRenderer?)Services.GetService(typeof(IMarkdownRenderer)) ?? _defaultRenderer;
+        Options.MarkdownRenderer
+        ?? (IMarkdownRenderer?)Services.GetService(typeof(IMarkdownRenderer))
+        ?? _defaultRenderer;
+
+    // A markdown renderer must never throw out of BuildRenderTree: on Blazor Server
+    // that kills the circuit and freezes the whole application. Degrade the one
+    // message that cannot be rendered to plain text instead.
+    private bool TryRenderMarkdown(string content, out MarkupString html)
+    {
+        if (_markdownFailedMessageId == Message.Id)
+        {
+            html = default;
+            return false;
+        }
+
+        if (Renderer.TryRender(content, out html))
+            return true;
+
+        _markdownFailedMessageId = Message.Id;
+        return false;
+    }
 
     private bool IsAssistant => Message.Role == MessageRole.Assistant;
 

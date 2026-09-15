@@ -166,6 +166,90 @@ public class MarkdownToInlinesRendererTests
         Assert.That(FlattenText(paragraph.Inlines), Is.EqualTo("first second"));
     }
 
+    // Markdig keeps one nested delimiter inline per "|", so a long block of pipe-delimited
+    // lines — the shape of tool output agents paste verbatim — nests hundreds of levels deep.
+    [Test]
+    public void PipeLinesWithoutSeparatorRow_RenderWithoutThrowing()
+    {
+        var markdown = string.Join("\n", Enumerable.Range(1, 40)
+            .Select(i => $"#{i} | AreaPath=TPA\\Line\\OIB | State=Done | Title=Story {i}"));
+
+        IReadOnlyList<Block> blocks = null!;
+        Assert.DoesNotThrow(() => blocks = MarkdownToInlinesRenderer.Render(markdown));
+        Assert.That(FlattenBlocks(blocks), Does.Contain("Story 40"));
+    }
+
+    // Nesting deeper than the walker's cap is flattened instead of recursed over: unbounded
+    // recursion here would overflow the stack, which no try/catch can recover from.
+    [Test]
+    public void DeeplyNestedInput_IsFlattened_AndKeepsItsText()
+    {
+        var markdown = string.Concat(Enumerable.Repeat("> ", 200)) + "still readable";
+
+        IReadOnlyList<Block> blocks = null!;
+        Assert.DoesNotThrow(() => blocks = MarkdownToInlinesRenderer.Render(markdown));
+        Assert.That(FlattenBlocks(blocks), Does.Contain("still readable"));
+    }
+
+    [Test]
+    public void DeeplyNestedEmphasis_IsFlattened_AndKeepsItsText()
+    {
+        var markdown = string.Concat(Enumerable.Repeat("*", 200)) + "still readable"
+                       + string.Concat(Enumerable.Repeat("*", 200));
+
+        IReadOnlyList<Block> blocks = null!;
+        Assert.DoesNotThrow(() => blocks = MarkdownToInlinesRenderer.Render(markdown));
+        Assert.That(FlattenBlocks(blocks), Does.Contain("still readable"));
+    }
+
+    [Test]
+    public void ThrowingFenceRenderer_FallsBackToDefaultCodeBlock()
+    {
+        MarkdownViewer.FenceRenderer = static (_, _) => throw new InvalidOperationException("host renderer blew up");
+        try
+        {
+            IReadOnlyList<Block> blocks = null!;
+            Assert.DoesNotThrow(() => blocks = MarkdownToInlinesRenderer.Render("```mermaid\ngraph TD;\n```"));
+
+            var container = (BlockUIContainer)blocks.Single();
+            var textBox = FindDescendant<TextBox>((FrameworkElement)container.Child);
+            Assert.That(textBox?.Text, Does.Contain("graph TD;"));
+        }
+        finally
+        {
+            MarkdownViewer.FenceRenderer = null;
+        }
+    }
+
+    [Test]
+    public void RenderPlainText_KeepsTheTextInASingleParagraph()
+    {
+        var blocks = MarkdownToInlinesRenderer.RenderPlainText("a | b\nc | d");
+
+        var paragraph = (Paragraph)blocks.Single();
+        Assert.That(FlattenText(paragraph.Inlines), Is.EqualTo("a | b\nc | d"));
+    }
+
+    [Test]
+    public void RenderPlainText_OfEmptyInput_YieldsNoBlocks()
+        => Assert.That(MarkdownToInlinesRenderer.RenderPlainText(""), Is.Empty);
+
+    private static string FlattenBlocks(IEnumerable<Block> blocks)
+        => string.Join("\n", blocks.Select(FlattenBlock));
+
+    private static string FlattenBlock(Block block) => block switch
+    {
+        Paragraph paragraph => FlattenText(paragraph.Inlines),
+        Section section => FlattenBlocks(section.Blocks),
+        System.Windows.Documents.List list => FlattenBlocks(list.ListItems.SelectMany(item => item.Blocks)),
+        System.Windows.Documents.Table table => FlattenBlocks(
+            table.RowGroups.SelectMany(group => group.Rows)
+                .SelectMany(row => row.Cells)
+                .SelectMany(cell => cell.Blocks)),
+        BlockUIContainer { Child: FrameworkElement child } => FindDescendant<TextBox>(child)?.Text ?? "",
+        _ => ""
+    };
+
     private static string FlattenText(InlineCollection inlines)
         => string.Concat(inlines.Select(FlattenText));
 

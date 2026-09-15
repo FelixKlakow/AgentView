@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -52,7 +53,20 @@ public class MarkdownViewer : ContentControl
     }
 
     private void Rebuild()
-        => Content = EnableMarkdown ? BuildMarkdownView() : BuildPlainView();
+    {
+        try
+        {
+            Content = EnableMarkdown ? BuildMarkdownView() : BuildPlainView();
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // This runs from a dependency-property callback — once per streaming delta — so an
+            // escaping exception ends up in the dispatcher and takes the host application down.
+            // Showing the message as plain text is always better than losing the window.
+            Debug.WriteLine($"AgentView: building the markdown view failed, falling back to plain text. {ex}");
+            Content = BuildPlainView();
+        }
+    }
 
     private TextBox BuildPlainView()
     {
