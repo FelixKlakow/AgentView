@@ -20,9 +20,9 @@
         @if (_expanded)
         {
             <div id="@_contentId" class="bav-system-prompt-content">
-                @if (Options.SystemPromptMarkdown)
+                @if (Options.SystemPromptMarkdown && Renderer.TryRender(SystemPrompt!, out var markdown))
                 {
-                    <div class="bav-markdown-content bav-system-prompt-markdown">@Renderer.Render(SystemPrompt)</div>
+                    <div class="bav-markdown-content bav-system-prompt-markdown">@markdown</div>
                 }
                 else
                 {
@@ -39,8 +39,12 @@
     [Parameter] public string? SystemPrompt { get; set; }
     [Parameter] public AgentChatOptions Options { get; set; } = new();
 
+    // A renderer failure falls through to the plain <pre> branch rather than
+    // escaping the render tree and taking down the Blazor Server circuit.
     private IMarkdownRenderer Renderer =>
-        (IMarkdownRenderer?)Services.GetService(typeof(IMarkdownRenderer)) ?? _defaultRenderer;
+        Options.MarkdownRenderer
+        ?? (IMarkdownRenderer?)Services.GetService(typeof(IMarkdownRenderer))
+        ?? _defaultRenderer;
 
     private bool _expanded = false;
     private readonly string _contentId = $"bav-system-prompt-{Guid.NewGuid():N}";

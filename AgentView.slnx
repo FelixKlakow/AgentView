@@ -13,5 +13,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/AgentView.Wpf.Tests/AgentView.Wpf.Tests.csproj" />
+    <Project Path="tests/BlazorAgentView.Tests/BlazorAgentView.Tests.csproj" />
   </Folder>
 </Solution>

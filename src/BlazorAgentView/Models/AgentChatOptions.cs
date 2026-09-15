@@ -1,3 +1,5 @@
+using BlazorAgentView.Services;
+
 namespace BlazorAgentView.Models;
 
 public class AgentChatOptions
@@ -39,4 +41,17 @@ public class AgentChatOptions
     /// Defaults to <c>true</c>.
     /// </summary>
     public bool ShowSystemPromptBanner { get; set; } = true;
+
+    /// <summary>
+    /// Overrides the <see cref="IMarkdownRenderer"/> used for this chat view.
+    /// <c>null</c> (default) resolves the renderer from DI and falls back to
+    /// <see cref="DefaultMarkdownRenderer"/> when none is registered.
+    /// </summary>
+    /// <remarks>
+    /// Use this to tune Markdig per view, e.g.
+    /// <c>new DefaultMarkdownRenderer(DefaultMarkdownRenderer.CreatePipeline(b =&gt; ...))</c>.
+    /// A renderer that throws never breaks the chat view: the affected message is
+    /// rendered as plain text instead.
+    /// </remarks>
+    public IMarkdownRenderer? MarkdownRenderer { get; set; }
 }
