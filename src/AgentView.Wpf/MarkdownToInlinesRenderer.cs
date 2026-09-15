@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -21,30 +22,68 @@ internal sealed class MarkdownToInlinesRenderer
         .UseAutoLinks()
         .Build();
 
+    /// <summary>
+    /// Nesting cap for the walk below. Markdig allows inline nesting thousands of levels deep
+    /// (its parser only rejects beyond 10k) and does not bound block nesting at all, while both
+    /// this walker and WPF's flow-document layout recurse once per level. Agent output reaches
+    /// those depths on its own — a tool that dumps pipe-delimited lines produces one nested
+    /// delimiter inline per <c>|</c> — and a stack overflow is not recoverable, so anything
+    /// deeper is flattened to text instead of nested further.
+    /// </summary>
+    private const int MaxDepth = 64;
+
     public static IReadOnlyList<System.Windows.Documents.Block> Render(string markdown)
     {
-        var document = Markdown.Parse(markdown ?? "", Pipeline);
-        var blocks = new List<System.Windows.Documents.Block>();
-        foreach (var block in document)
-            AppendBlock(blocks, block);
-        return blocks;
+        var text = markdown ?? "";
+        try
+        {
+            var document = Markdown.Parse(text, Pipeline);
+            var blocks = new List<System.Windows.Documents.Block>();
+            foreach (var block in document)
+                AppendBlock(blocks, block, 0);
+            return blocks;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // Markdig rejects some inputs outright, and building the flow document can fail on
+            // content this walker has never seen. MarkdownViewer rebuilds from a dependency
+            // property callback, so an escaping exception would take down the host application —
+            // the message loses its formatting instead.
+            Debug.WriteLine($"AgentView: markdown rendering failed, falling back to plain text. {ex}");
+            return RenderPlainText(text);
+        }
     }
 
-    private static void AppendBlock(ICollection<System.Windows.Documents.Block> target, MdBlock block)
+    /// <summary>Last-resort rendering: the input as one plain paragraph.</summary>
+    internal static IReadOnlyList<System.Windows.Documents.Block> RenderPlainText(string text)
+        => text.Length == 0
+            ? Array.Empty<System.Windows.Documents.Block>()
+            : new System.Windows.Documents.Block[]
+            {
+                new Paragraph(new Run(text)) { Margin = new Thickness(0, 2, 0, 6) }
+            };
+
+    private static void AppendBlock(ICollection<System.Windows.Documents.Block> target, MdBlock block, int depth)
     {
+        if (depth > MaxDepth)
+        {
+            target.Add(new Paragraph(new Run(FlattenText(block))) { Margin = new Thickness(0, 2, 0, 6) });
+            return;
+        }
+
         switch (block)
         {
             case HeadingBlock heading:
-                target.Add(RenderHeading(heading));
+                target.Add(RenderHeading(heading, depth));
                 break;
             case Markdig.Syntax.ParagraphBlock paragraph:
-                target.Add(RenderParagraph(paragraph));
+                target.Add(RenderParagraph(paragraph, depth));
                 break;
             case FencedCodeBlock code:
                 // A host-registered fence renderer (e.g. mermaid diagrams) takes precedence;
                 // unhandled languages fall back to the plain code block.
                 if (code.Info?.Trim() is { Length: > 0 } language
-                    && MarkdownViewer.FenceRenderer?.Invoke(language, ExtractCode(code)) is { } custom)
+                    && InvokeFenceRenderer(language, ExtractCode(code)) is { } custom)
                     target.Add(new BlockUIContainer(custom) { Margin = new Thickness(0, 4, 0, 6) });
                 else
                     target.Add(RenderCodeBlock(ExtractCode(code)));
@@ -53,33 +92,33 @@ internal sealed class MarkdownToInlinesRenderer
                 target.Add(RenderCodeBlock(ExtractCode(code)));
                 break;
             case Markdig.Syntax.ListBlock list:
-                target.Add(RenderList(list));
+                target.Add(RenderList(list, depth));
                 break;
             case Markdig.Syntax.QuoteBlock quote:
-                target.Add(RenderQuote(quote));
+                target.Add(RenderQuote(quote, depth));
                 break;
             case ThematicBreakBlock:
                 target.Add(RenderThematicBreak());
                 break;
             case MdTable table:
-                target.Add(RenderTable(table));
+                target.Add(RenderTable(table, depth));
                 break;
             case HtmlBlock html:
                 target.Add(RenderCodeBlock(ExtractCode(html)));
                 break;
             case ContainerBlock container:
                 foreach (var child in container)
-                    AppendBlock(target, child);
+                    AppendBlock(target, child, depth + 1);
                 break;
             case LeafBlock { Inline: not null } leaf:
                 var fallback = new Paragraph();
-                AppendInlines(fallback.Inlines, leaf.Inline);
+                AppendInlines(fallback.Inlines, leaf.Inline, depth + 1);
                 target.Add(fallback);
                 break;
         }
     }
 
-    private static Paragraph RenderHeading(HeadingBlock heading)
+    private static Paragraph RenderHeading(HeadingBlock heading, int depth)
     {
         var paragraph = new Paragraph
         {
@@ -94,15 +133,15 @@ internal sealed class MarkdownToInlinesRenderer
             Margin = new Thickness(0, heading.Level <= 2 ? 10 : 8, 0, 4)
         };
         if (heading.Inline is not null)
-            AppendInlines(paragraph.Inlines, heading.Inline);
+            AppendInlines(paragraph.Inlines, heading.Inline, depth + 1);
         return paragraph;
     }
 
-    private static Paragraph RenderParagraph(Markdig.Syntax.ParagraphBlock block)
+    private static Paragraph RenderParagraph(Markdig.Syntax.ParagraphBlock block, int depth)
     {
         var paragraph = new Paragraph { Margin = new Thickness(0, 2, 0, 6) };
         if (block.Inline is not null)
-            AppendInlines(paragraph.Inlines, block.Inline);
+            AppendInlines(paragraph.Inlines, block.Inline, depth + 1);
         return paragraph;
     }
 
@@ -147,7 +186,7 @@ internal sealed class MarkdownToInlinesRenderer
         return new BlockUIContainer(border) { Margin = new Thickness(0, 4, 0, 6) };
     }
 
-    private static System.Windows.Documents.List RenderList(Markdig.Syntax.ListBlock list)
+    private static System.Windows.Documents.List RenderList(Markdig.Syntax.ListBlock list, int depth)
     {
         var result = new System.Windows.Documents.List
         {
@@ -160,7 +199,7 @@ internal sealed class MarkdownToInlinesRenderer
             var listItem = new System.Windows.Documents.ListItem();
             var children = new List<System.Windows.Documents.Block>();
             foreach (var child in item)
-                AppendBlock(children, child);
+                AppendBlock(children, child, depth + 1);
             if (children.Count == 0)
                 children.Add(new Paragraph());
             foreach (var child in children)
@@ -173,7 +212,7 @@ internal sealed class MarkdownToInlinesRenderer
         return result;
     }
 
-    private static Section RenderQuote(Markdig.Syntax.QuoteBlock quote)
+    private static Section RenderQuote(Markdig.Syntax.QuoteBlock quote, int depth)
     {
         var section = new Section
         {
@@ -185,7 +224,7 @@ internal sealed class MarkdownToInlinesRenderer
         section.SetResourceReference(System.Windows.Documents.Block.BorderBrushProperty, AgentViewResourceKeys.BorderBrushKey);
         var children = new List<System.Windows.Documents.Block>();
         foreach (var child in quote)
-            AppendBlock(children, child);
+            AppendBlock(children, child, depth + 1);
         foreach (var child in children)
             section.Blocks.Add(child);
         return section;
@@ -198,7 +237,7 @@ internal sealed class MarkdownToInlinesRenderer
         return new BlockUIContainer(line) { Margin = new Thickness(0, 8, 0, 8) };
     }
 
-    private static System.Windows.Documents.Table RenderTable(MdTable table)
+    private static System.Windows.Documents.Table RenderTable(MdTable table, int depth)
     {
         var result = new System.Windows.Documents.Table
         {
@@ -221,7 +260,7 @@ internal sealed class MarkdownToInlinesRenderer
             {
                 var content = new List<System.Windows.Documents.Block>();
                 foreach (var child in cell)
-                    AppendBlock(content, child);
+                    AppendBlock(content, child, depth + 1);
                 var tableCell = new System.Windows.Documents.TableCell
                 {
                     BorderThickness = new Thickness(0, 0, 1, 1),
@@ -243,14 +282,20 @@ internal sealed class MarkdownToInlinesRenderer
         return result;
     }
 
-    private static void AppendInlines(InlineCollection target, ContainerInline container)
+    private static void AppendInlines(InlineCollection target, ContainerInline container, int depth)
     {
         foreach (var inline in container)
-            AppendInline(target, inline);
+            AppendInline(target, inline, depth);
     }
 
-    private static void AppendInline(InlineCollection target, MdInline inline)
+    private static void AppendInline(InlineCollection target, MdInline inline, int depth)
     {
+        if (depth > MaxDepth)
+        {
+            target.Add(new Run(FlattenText(inline)));
+            return;
+        }
+
         switch (inline)
         {
             case LiteralInline literal:
@@ -262,7 +307,7 @@ internal sealed class MarkdownToInlinesRenderer
                     span.FontWeight = FontWeights.Bold;
                 if (emphasis.DelimiterCount is 1 or 3)
                     span.FontStyle = FontStyles.Italic;
-                AppendInlines(span.Inlines, emphasis);
+                AppendInlines(span.Inlines, emphasis, depth + 1);
                 target.Add(span);
                 break;
             case CodeInline code:
@@ -272,7 +317,7 @@ internal sealed class MarkdownToInlinesRenderer
                 target.Add(run);
                 break;
             case LinkInline link:
-                AppendLink(target, link);
+                AppendLink(target, link, depth);
                 break;
             case AutolinkInline autolink:
                 var autoHyperlink = CreateHyperlink(autolink.Url);
@@ -289,7 +334,7 @@ internal sealed class MarkdownToInlinesRenderer
                 target.Add(new Run(html.Tag));
                 break;
             case ContainerInline container:
-                AppendInlines(target, container);
+                AppendInlines(target, container, depth + 1);
                 break;
             default:
                 var text = inline.ToString();
@@ -299,7 +344,7 @@ internal sealed class MarkdownToInlinesRenderer
         }
     }
 
-    private static void AppendLink(InlineCollection target, LinkInline link)
+    private static void AppendLink(InlineCollection target, LinkInline link, int depth)
     {
         if (link.IsImage)
         {
@@ -314,7 +359,7 @@ internal sealed class MarkdownToInlinesRenderer
         if (link.FirstChild is null)
             hyperlink.Inlines.Add(new Run(link.Url ?? ""));
         else
-            AppendInlines(hyperlink.Inlines, link);
+            AppendInlines(hyperlink.Inlines, link, depth + 1);
         target.Add(hyperlink);
     }
 
@@ -330,6 +375,94 @@ internal sealed class MarkdownToInlinesRenderer
                 OpenInBrowser(target);
         };
         return hyperlink;
+    }
+
+    /// <summary>
+    /// Calls the host-registered fence renderer. A host callback that throws costs that one
+    /// fence its custom rendering (it falls back to the plain code block) instead of the
+    /// whole message — or the application.
+    /// </summary>
+    private static UIElement? InvokeFenceRenderer(string language, string code)
+    {
+        try
+        {
+            return MarkdownViewer.FenceRenderer?.Invoke(language, code);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            Debug.WriteLine($"AgentView: fence renderer for '{language}' failed, using the default code block. {ex}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Collects the text of a subtree that is nested too deeply to render. Both walks are
+    /// iterative: the input that gets here is exactly the input that must not be recursed over.
+    /// </summary>
+    private static string FlattenText(MdBlock block)
+    {
+        var builder = new StringBuilder();
+        var pending = new Stack<MdBlock>();
+        pending.Push(block);
+
+        while (pending.Count > 0)
+        {
+            switch (pending.Pop())
+            {
+                case ContainerBlock container:
+                    for (var i = container.Count - 1; i >= 0; i--)
+                        pending.Push(container[i]);
+                    break;
+                case LeafBlock leaf:
+                    if (leaf.Inline is not null)
+                        AppendFlattenedText(builder, leaf.Inline);
+                    else
+                        builder.Append(ExtractCode(leaf));
+                    builder.AppendLine();
+                    break;
+            }
+        }
+
+        return builder.ToString().Trim();
+    }
+
+    private static string FlattenText(MdInline inline)
+    {
+        var builder = new StringBuilder();
+        AppendFlattenedText(builder, inline);
+        return builder.ToString();
+    }
+
+    private static void AppendFlattenedText(StringBuilder builder, MdInline inline)
+    {
+        var pending = new Stack<MdInline>();
+        pending.Push(inline);
+
+        while (pending.Count > 0)
+        {
+            switch (pending.Pop())
+            {
+                case LiteralInline literal:
+                    builder.Append(literal.Content.ToString());
+                    break;
+                case CodeInline code:
+                    builder.Append(code.Content);
+                    break;
+                case AutolinkInline autolink:
+                    builder.Append(autolink.Url);
+                    break;
+                case HtmlInline html:
+                    builder.Append(html.Tag);
+                    break;
+                case LineBreakInline:
+                    builder.Append(' ');
+                    break;
+                case ContainerInline container:
+                    foreach (var child in Enumerable.Reverse(container.ToList()))
+                        pending.Push(child);
+                    break;
+            }
+        }
     }
 
     private static void OpenInBrowser(Uri uri)
